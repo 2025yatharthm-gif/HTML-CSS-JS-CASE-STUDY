@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hangman</title>
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Caveat:wght@400;600;700&family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
+
+<!-- SCREEN: MODE SELECT (landing) -->
+<div class="screen active" id="screen-mode">
+  <div class="chalk-texture"></div>
+  <div class="mode-screen">
+    <div class="gallows-deco">
+      <svg viewBox="0 0 120 160" width="120" height="160">
+        <line class="scaffold" x1="10" y1="150" x2="110" y2="150"/>
+        <line class="scaffold" x1="35" y1="150" x2="35" y2="10"/>
+        <line class="scaffold" x1="35" y1="10" x2="80" y2="10"/>
+        <line class="scaffold" x1="80" y1="10" x2="80" y2="30"/>
+        <circle class="body-part shown" cx="80" cy="43" r="13"/>
+        <line class="body-part shown" x1="80" y1="56" x2="80" y2="100"/>
+        <line class="body-part shown" x1="80" y1="68" x2="60" y2="88"/>
+        <line class="body-part shown" x1="80" y1="68" x2="100" y2="88"/>
+        <line class="body-part shown" x1="80" y1="100" x2="60" y2="128"/>
+        <line class="body-part shown" x1="80" y1="100" x2="100" y2="128"/>
+      </svg>
+    </div>
+    <h1 class="game-title">HANGMAN</h1>
+    <p class="game-tagline">guess the word. save the man.</p>
+    <div class="mode-cards">
+      <button class="mode-card" onclick="goSolo()">
+        <div class="mode-icon">👤</div>
+        <div class="mode-name">Solo</div>
+        <div class="mode-desc">You vs the word bank. Pick a category and guess before the rope runs out.</div>
+      </button>
+      <button class="mode-card" onclick="goMulti()">
+        <div class="mode-icon">👥</div>
+        <div class="mode-name">Multiplayer</div>
+        <div class="mode-desc">One player sets a secret word. The other guesses. Roles switch every round.</div>
+      </button>
+    </div>
+    <button class="text-btn" onclick="goLeaderboard()">📋 Leaderboard</button>
+  </div>
+</div>
+
+<!-- SCREEN: SOLO SETUP -->
+<div class="screen" id="screen-solo-setup">
+  <div class="chalk-texture"></div>
+  <div class="setup-screen">
+    <button class="back-btn" onclick="goHome()">← Back</button>
+    <h2 class="setup-title">Solo Game</h2>
+    <div class="setup-form">
+      <div class="form-group">
+        <label class="form-label">Your Name</label>
+        <input class="form-input" id="solo-name" type="text" placeholder="Player" maxlength="16">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <div class="chip-grid" id="solo-cat-grid">
+          <button class="chip active" onclick="selectChip(this,'solo-cat','General')">🌐 General</button>
+          <button class="chip" onclick="selectChip(this,'solo-cat','Movies')">🎬 Movies</button>
+          <button class="chip" onclick="selectChip(this,'solo-cat','Science')">🔬 Science</button>
+          <button class="chip" onclick="selectChip(this,'solo-cat','Coding')">💻 Coding</button>
+          <button class="chip" onclick="selectChip(this,'solo-cat','Animals')">🦁 Animals</button>
+          <button class="chip" onclick="selectChip(this,'solo-cat','Geography')">🗺️ Geography</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Difficulty</label>
+        <div class="chip-grid">
+          <button class="chip diff-chip active" data-diff="easy" onclick="selectDiff(this,'easy')">Easy</button>
+          <button class="chip diff-chip" data-diff="medium" onclick="selectDiff(this,'medium')">Medium</button>
+          <button class="chip diff-chip" data-diff="hard" onclick="selectDiff(this,'hard')">Hard</button>
+        </div>
+      </div>
+      <button class="big-btn" onclick="startSolo()">Start Game →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: MULTI SETUP -->
+<div class="screen" id="screen-multi-setup">
+  <div class="chalk-texture"></div>
+  <div class="setup-screen">
+    <button class="back-btn" onclick="goHome()">← Back</button>
+    <h2 class="setup-title">Multiplayer</h2>
+    <div class="setup-form">
+      <div class="players-row">
+        <div class="form-group half">
+          <label class="form-label">Player 1</label>
+          <input class="form-input" id="mp-p1" type="text" placeholder="Player 1" maxlength="14">
+        </div>
+        <div class="vs-badge">VS</div>
+        <div class="form-group half">
+          <label class="form-label">Player 2</label>
+          <input class="form-input" id="mp-p2" type="text" placeholder="Player 2" maxlength="14">
+        </div>
+      </div>
+      <div class="round-rule-box">
+        <div class="rule-title">How It Works</div>
+        <div class="rule-item">🔒 <strong>Round 1:</strong> Player 1 sets a word → Player 2 guesses</div>
+        <div class="rule-item">🔒 <strong>Round 2:</strong> Player 2 sets a word → Player 1 guesses</div>
+        <div class="rule-item">🏆 Guesser wins a round → <strong>+10 pts</strong></div>
+        <div class="rule-item">💀 Setter wins a round → <strong>+10 pts</strong></div>
+      </div>
+      <button class="big-btn" onclick="startMulti()">Start Match →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: SOLO GAME -->
+<div class="screen" id="screen-solo-game">
+  <div class="chalk-texture"></div>
+  <div class="game-layout solo-layout">
+
+    <!-- Left: Gallows -->
+    <div class="gallows-panel">
+      <div class="panel-label" id="solo-category-label">General · Easy</div>
+      <svg id="solo-svg" viewBox="0 0 140 180" class="gallows-svg">
+        <line class="scaffold" x1="10" y1="170" x2="130" y2="170"/>
+        <line class="scaffold" x1="35" y1="170" x2="35" y2="10"/>
+        <line class="scaffold" x1="35" y1="10" x2="90" y2="10"/>
+        <line class="scaffold" x1="90" y1="10" x2="90" y2="30"/>
+        <circle id="sg-head" class="body-part" cx="90" cy="44" r="14"/>
+        <line id="sg-body" class="body-part" x1="90" y1="58" x2="90" y2="110"/>
+        <line id="sg-la"   class="body-part" x1="90" y1="72" x2="66" y2="96"/>
+        <line id="sg-ra"   class="body-part" x1="90" y1="72" x2="114" y2="96"/>
+        <line id="sg-ll"   class="body-part" x1="90" y1="110" x2="66" y2="144"/>
+        <line id="sg-rl"   class="body-part" x1="90" y1="110" x2="114" y2="144"/>
+      </svg>
+      <div class="attempts-ring">
+        <span id="solo-attempts" class="attempts-big">6</span>
+        <span class="attempts-sub">left</span>
+      </div>
+      <div class="wrong-letters-box">
+        <div class="wl-label">Wrong</div>
+        <div id="solo-wrong" class="wl-letters">—</div>
+      </div>
+    </div>
+
+    <!-- Center: Word + Keyboard -->
+    <div class="center-panel">
+      <div class="top-bar">
+        <button class="ghost-btn" onclick="goHome()">✕ Quit</button>
+        <div class="player-badge" id="solo-player-badge">Player</div>
+        <div class="score-badge">Score: <span id="solo-score-disp">0</span></div>
+      </div>
+      <div class="word-area" id="solo-word-area"></div>
+      <div class="word-hint-text" id="solo-word-hint"></div>
+      <div class="keyboard" id="solo-keyboard"></div>
+    </div>
+
+    <!-- Right: Stats -->
+    <div class="stats-panel">
+      <div class="stat-card">
+        <div class="stat-label">Wins</div>
+        <div class="stat-val green" id="solo-wins">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Losses</div>
+        <div class="stat-val red" id="solo-losses">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Streak</div>
+        <div class="stat-val amber" id="solo-streak">0</div>
+      </div>
+      <div class="recent-box">
+        <div class="stat-label" style="margin-bottom:0.5rem;">Recent</div>
+        <div id="solo-recent"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SCREEN: MULTI WORD SETUP (setter enters word) -->
+<div class="screen" id="screen-word-setup">
+  <div class="chalk-texture"></div>
+  <div class="word-setup-screen">
+    <div class="ws-round-badge" id="ws-round-badge">Round 1</div>
+    <div class="ws-setter-label" id="ws-setter-label">Player 1 — Set Your Word</div>
+    <div class="ws-guesser-note" id="ws-guesser-note">Player 2, look away! 👀</div>
+    <div class="ws-gallows-mini">
+      <svg viewBox="0 0 90 120" width="90" height="120">
+        <line class="scaffold" x1="8" y1="112" x2="82" y2="112"/>
+        <line class="scaffold" x1="25" y1="112" x2="25" y2="8"/>
+        <line class="scaffold" x1="25" y1="8" x2="62" y2="8"/>
+        <line class="scaffold" x1="62" y1="8" x2="62" y2="24"/>
+        <circle class="body-part" cx="62" cy="35" r="11" style="opacity:0.25;stroke:var(--ink)"/>
+      </svg>
+    </div>
+    <input
+      id="ws-input"
+      type="password"
+      class="ws-input"
+      placeholder="Type secret word…"
+      maxlength="20"
+      autocomplete="off"
+      oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')"
+      onkeydown="if(event.key==='Enter')wsConfirm()"
+    />
+    <div id="ws-error" class="ws-error"></div>
+    <button class="big-btn" onclick="wsConfirm()">Lock It In 🔒</button>
+  </div>
+</div>
+
+<!-- SCREEN: MULTI GAME (guessing) -->
+<div class="screen" id="screen-multi-game">
+  <div class="chalk-texture"></div>
+  <div class="game-layout multi-layout">
+
+    <!-- Left: Gallows + Scores -->
+    <div class="gallows-panel">
+      <div class="mp-score-board">
+        <div class="mp-score-card" id="mp-sc-0">
+          <div class="mp-score-name" id="mp-sc-name-0">P1</div>
+          <div class="mp-score-role" id="mp-sc-role-0">Setter</div>
+          <div class="mp-score-pts"  id="mp-sc-pts-0">0</div>
+        </div>
+        <div class="mp-score-divider">vs</div>
+        <div class="mp-score-card" id="mp-sc-1">
+          <div class="mp-score-name" id="mp-sc-name-1">P2</div>
+          <div class="mp-score-role" id="mp-sc-role-1">Guesser</div>
+          <div class="mp-score-pts"  id="mp-sc-pts-1">0</div>
+        </div>
+      </div>
+
+      <svg id="multi-svg" viewBox="0 0 140 180" class="gallows-svg">
+        <line class="scaffold" x1="10" y1="170" x2="130" y2="170"/>
+        <line class="scaffold" x1="35" y1="170" x2="35" y2="10"/>
+        <line class="scaffold" x1="35" y1="10" x2="90" y2="10"/>
+        <line class="scaffold" x1="90" y1="10" x2="90" y2="30"/>
+        <circle id="mg-head" class="body-part" cx="90" cy="44" r="14"/>
+        <line id="mg-body"   class="body-part" x1="90" y1="58" x2="90" y2="110"/>
+        <line id="mg-la"     class="body-part" x1="90" y1="72" x2="66" y2="96"/>
+        <line id="mg-ra"     class="body-part" x1="90" y1="72" x2="114" y2="96"/>
+        <line id="mg-ll"     class="body-part" x1="90" y1="110" x2="66" y2="144"/>
+        <line id="mg-rl"     class="body-part" x1="90" y1="110" x2="114" y2="144"/>
+      </svg>
+      <div class="attempts-ring">
+        <span id="multi-attempts" class="attempts-big">6</span>
+        <span class="attempts-sub">left</span>
+      </div>
+      <div class="wrong-letters-box">
+        <div class="wl-label">Wrong</div>
+        <div id="multi-wrong" class="wl-letters">—</div>
+      </div>
+    </div>
+
+    <!-- Center -->
+    <div class="center-panel">
+      <div class="top-bar">
+        <button class="ghost-btn" onclick="goHome()">✕ Quit</button>
+        <div class="round-indicator" id="multi-round-ind">Round 1</div>
+        <div class="guesser-tag" id="multi-guesser-tag">Guessing: P2</div>
+      </div>
+      <div class="word-area" id="multi-word-area"></div>
+      <div class="word-hint-text" id="multi-word-hint"></div>
+      <div class="keyboard" id="multi-keyboard"></div>
+    </div>
+
+    <!-- Right: Round log -->
+    <div class="stats-panel">
+      <div class="stat-label" style="margin-bottom:0.8rem;">Round Log</div>
+      <div id="multi-round-log"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SCREEN: ROUND RESULT -->
+<div class="screen" id="screen-result">
+  <div class="chalk-texture"></div>
+  <div class="result-screen">
+    <div class="result-icon" id="result-icon">⚡</div>
+    <div class="result-title" id="result-title">GUESSER WINS!</div>
+    <div class="result-word"  id="result-word">The word was HANGMAN</div>
+    <div class="result-score-row" id="result-score-row"></div>
+    <div class="result-gallows" id="result-gallows"></div>
+    <div class="result-buttons" id="result-buttons"></div>
+  </div>
+</div>
+
+<!-- SCREEN: LEADERBOARD -->
+<div class="screen" id="screen-leaderboard">
+  <div class="chalk-texture"></div>
+  <div class="lb-screen">
+    <button class="back-btn" onclick="goHome()">← Back</button>
+    <h2 class="setup-title">Leaderboard</h2>
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Name</th><th>Score</th><th>Games</th><th>Win %</th>
+        </tr>
+      </thead>
+      <tbody id="lb-tbody"></tbody>
+    </table>
+    <button class="text-btn danger" onclick="clearLB()">Clear All Data</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
